@@ -3,222 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Sistema WebAR de Realidad Aumentada para Aula Virtual con avatares personalizados">
-    <meta name="theme-color" content="#6366f1">
-    
-    <title>WebAR - Aula Virtual con Realidad Aumentada</title>
-    
-    <!-- A-Frame Framework -->
-    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-    
-    <!-- AR.js for WebAR -->
-    <script src="https://cdn.jsdelivr.net/npm/ar.js@3.4.5/three.js/ar.js"></script>
-    
-    <!-- THREE.js (requerido por A-Frame) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    
-    <!-- GLB/GLTF Loader -->
-    <script src="https://cdn.jsdelivr.net/npm/three@r128/examples/js/loaders/GLTFLoader.js"></script>
-    
-    <!-- Draco Decoder for compressed models -->
-    <script src="https://cdn.jsdelivr.net/npm/three@r128/examples/js/loaders/DRACOLoader.js"></script>
-    
-    <!-- GSAP for animations -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    
-    <!-- CSS Styles -->
+    <meta name="description" content="Aula virtual con realidad aumentada y carga de modelos 3D">
+    <title>Aula Virtual AR</title>
+
     <link rel="stylesheet" href="styles.css">
+
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ar.js@3.4.5/three.js/ar.js"></script>
 </head>
 <body>
-    <!-- AR Scene -->
-    <a-scene embedded arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;">
-        <!-- Marker for Image Tracking -->
-        <a-marker id="marker" preset="hiro">
-            <!-- Avatar Container -->
-            <a-entity 
-                id="avatar-container"
-                position="0 0 0"
-                scale="1 1 1"
-                rotation="0 0 0">
-                
-                <!-- Default placeholder sphere -->
-                <a-sphere 
-                    id="placeholder"
-                    position="0 0 0"
-                    radius="0.3"
-                    color="#6366f1"
-                    opacity="0.8">
-                    <a-animation
-                        attribute="rotation"
-                        dur="4000"
-                        fill="forwards"
-                        repeat="indefinite"
-                        to="0 360 0">
-                    </a-animation>
-                </a-sphere>
-                
-                <!-- Lighting -->
-                <a-light 
-                    type="ambient"
-                    intensity="0.8"
-                    color="#ffffff">
-                </a-light>
-                
-                <a-light 
-                    type="directional"
-                    position="0 1 0"
-                    intensity="0.6"
-                    color="#ffffff">
-                </a-light>
-            </a-entity>
-        </a-marker>
-        
-        <!-- Camera setup -->
-        <a-camera position="0 0 0"></a-camera>
-    </a-scene>
-    
-    <!-- UI Overlay -->
-    <div id="ui-container" class="ui-container">
-        
-        <!-- Top Header -->
-        <header class="header">
-            <div class="header-content">
-                <h1 class="title">🌐 WebAR Aula Virtual</h1>
-                <button id="btn-info" class="header-btn" title="Información">ℹ️</button>
+    <div class="screen" id="login-screen">
+        <div class="card login-card">
+            <h1>Aula Virtual</h1>
+            <p>Inicia sesión con usuario válido para acceder al aula.</p>
+            <form id="login-form" class="form">
+                <label for="username">Usuario</label>
+                <input type="text" id="username" placeholder="user_1" autocomplete="username">
+                <label for="password">Contraseña</label>
+                <input type="password" id="password" placeholder="user_1" autocomplete="current-password">
+                <button type="submit" class="button">Ingresar</button>
+                <p class="hint">Usuarios válidos: user_1, user_2, user_3. La contraseña debe ser igual al usuario.</p>
+                <div id="login-error" class="alert hidden"></div>
+            </form>
+        </div>
+    </div>
+
+    <div class="app-layout hidden" id="app-screen">
+        <header class="app-header">
+            <div>
+                <span class="app-label">Aula Virtual</span>
+                <span class="user-label">Usuario: <strong id="active-user"></strong></span>
             </div>
+            <button id="logout-button" class="button button-secondary">Cerrar sesión</button>
         </header>
-        
-        <!-- Control Panel -->
-        <div id="control-panel" class="control-panel">
-            <h2 class="panel-title">Control de Avatar</h2>
-            
-            <!-- Avatar Source Selection -->
-            <div class="section">
-                <h3 class="section-title">📥 Cargar Avatar</h3>
-                <div class="button-group">
-                    <button id="btn-rpm" class="btn btn-primary" title="Generar avatar en Ready Player Me">
-                        <span>🎨</span> Ready Player Me
-                    </button>
-                    <button id="btn-upload" class="btn btn-secondary" title="Cargar archivo GLB local">
-                        <span>📤</span> Subir GLB
-                    </button>
-                    <button id="btn-preset" class="btn btn-secondary" title="Usar avatar predefinido">
-                        <span>⭐</span> Preestablecido
-                    </button>
+
+        <div class="app-body">
+            <aside class="sidebar" id="sidebar">
+                <div class="sidebar-header">
+                    <h2>Menú</h2>
+                    <button id="sidebar-toggle" class="sidebar-toggle">Menu</button>
                 </div>
-                <input type="file" id="file-input" accept=".glb,.gltf,.obj" hidden>
-            </div>
-            
-            <!-- Avatar URL Input -->
-            <div class="section">
-                <label for="avatar-url" class="label">🔗 URL del Avatar GLB:</label>
-                <div class="input-group">
-                    <input 
-                        type="text" 
-                        id="avatar-url" 
-                        class="input" 
-                        placeholder="https://..."
-                        maxlength="500">
-                    <button id="btn-load-url" class="btn btn-small" title="Cargar desde URL">⬆️</button>
+                <nav class="menu-list">
+                    <button class="menu-item">Ética</button>
+                    <button class="menu-item">Biología</button>
+                    <button class="menu-item">Religión</button>
+                    <button class="menu-item">Matemáticas</button>
+                    <button class="menu-item">Lengua Castellana</button>
+                </nav>
+                <section class="sidebar-section">
+                    <h3>Compañeros</h3>
+                    <ul id="team-list" class="team-list"></ul>
+                </section>
+            </aside>
+
+            <main class="main-content">
+                <div class="tabs">
+                    <button class="tab-button active" data-tab="kahoot-tab">Kahoot</button>
+                    <button class="tab-button" data-tab="ar-tab">Realidad Aumentada</button>
                 </div>
-                <small class="help-text">Ingresa URL de avatar GLB o Ready Player Me</small>
-            </div>
-            
-            <!-- Interaction Controls -->
-            <div class="section">
-                <h3 class="section-title">🎮 Interactividad</h3>
-                <div class="button-group">
-                    <button id="btn-rotate-left" class="btn btn-control" title="Girar izquierda">⬅️</button>
-                    <button id="btn-rotate-right" class="btn btn-control" title="Girar derecha">➡️</button>
-                    <button id="btn-zoom-in" class="btn btn-control" title="Aumentar zoom">🔍+</button>
-                    <button id="btn-zoom-out" class="btn btn-control" title="Disminuir zoom">🔍-</button>
-                    <button id="btn-reset" class="btn btn-control" title="Reiniciar posición">🔄</button>
-                </div>
-            </div>
-            
-            <!-- Display Info -->
-            <div class="section">
-                <div id="avatar-info" class="info-box">
-                    <p class="info-label">📊 Información del Avatar:</p>
-                    <p id="info-text" class="info-text">Cargando...</p>
-                </div>
-            </div>
-            
-            <!-- Gamification -->
-            <div class="section">
-                <h3 class="section-title">🎮 Gamificación</h3>
-                <div class="button-group">
-                    <button id="btn-kahoot" class="btn btn-gamification">
-                        <span>🎯</span> Acceder a Kahoot
-                    </button>
-                </div>
-                <div class="input-group">
-                    <input 
-                        type="text" 
-                        id="user-nickname" 
-                        class="input" 
-                        placeholder="Tu nombre de usuario"
-                        maxlength="50">
-                </div>
-            </div>
-            
-            <!-- Status Messages -->
-            <div id="status-message" class="status-message" style="display: none;"></div>
-        </div>
-        
-        <!-- Bottom Info Bar -->
-        <footer class="footer">
-            <div class="footer-content">
-                <span id="status-indicator" class="status-indicator"></span>
-                <span id="performance-info" class="performance-info">FPS: --</span>
-                <span id="marker-status" class="marker-status">🔴 Sin marcador</span>
-            </div>
-        </footer>
-    </div>
-    
-    <!-- Info Modal -->
-    <div id="info-modal" class="modal" style="display: none;">
-        <div class="modal-content">
-            <button class="modal-close">&times;</button>
-            <h2>ℹ️ Información del Sistema</h2>
-            <div class="modal-body">
-                <h3>Requisitos:</h3>
-                <ul>
-                    <li>✅ Navegador con soporte WebGL</li>
-                    <li>✅ Cámara web habilitada</li>
-                    <li>✅ Conexión a Internet (para cargar avatares)</li>
-                    <li>✅ Marcador de imagen "Hiro" visible</li>
-                </ul>
-                
-                <h3>Instrucciones:</h3>
-                <ol>
-                    <li>Permite el acceso a la cámara cuando se solicite</li>
-                    <li>Muestra el marcador "Hiro" a la cámara</li>
-                    <li>Genera tu avatar en Ready Player Me o carga uno existente</li>
-                    <li>¡Interactúa con tu avatar en realidad aumentada!</li>
-                </ol>
-                
-                <h3>Tecnologías Utilizadas:</h3>
-                <ul>
-                    <li>🎨 A-Frame (Framework AR)</li>
-                    <li>📡 AR.js (Detección de marcadores)</li>
-                    <li>👤 Ready Player Me (Avatares personalizados)</li>
-                    <li>🎯 Kahoot (Gamificación)</li>
-                </ul>
-                
-                <h3>¿Necesitas ayuda?</h3>
-                <p>Consulta la documentación en <code>docs/GUIA_IMPLEMENTACION.md</code></p>
-            </div>
+
+                <section class="tab-panel" id="kahoot-tab">
+                    <div class="panel-card">
+                        <h2>Kahoot</h2>
+                        <p>Esta sección integra una experiencia de gamificación básica y permite acceder a Kahoot para actividades externas.</p>
+                        <div class="kahoot-actions">
+                            <button id="launch-kahoot" class="button">Abrir Kahoot</button>
+                            <button id="start-quiz" class="button button-secondary">Iniciar cuestionario interno</button>
+                        </div>
+                        <div id="quiz-container" class="quiz-container hidden">
+                            <p class="quiz-title">Pregunta de repaso</p>
+                            <p>¿Cuál es el propósito de la realidad aumentada en el aula virtual?</p>
+                            <div class="quiz-options">
+                                <button class="quiz-option">Aumentar la carga de trabajo</button>
+                                <button class="quiz-option">Mejorar la experiencia de aprendizaje</button>
+                                <button class="quiz-option">Reducir la interacción</button>
+                                <button class="quiz-option">Eliminar el uso de la cámara</button>
+                            </div>
+                            <div id="quiz-result" class="quiz-result hidden"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="tab-panel hidden" id="ar-tab">
+                    <div class="panel-card">
+                        <h2>Realidad Aumentada</h2>
+                        <p>Carga un modelo 3D en formato GLB para visualizarlo sobre el marcador Hiro en realidad aumentada.</p>
+                        <div class="ar-actions">
+                            <label class="file-label">
+                                <span class="file-icon">📁</span>
+                                Seleccionar Modelo GLB
+                                <input type="file" id="glb-input" accept=".glb">
+                            </label>
+                        </div>
+                        <div class="ar-status" id="ar-status">Selecciona un modelo GLB para comenzar</div>
+                        <div class="ar-panel" id="ar-panel">
+                            <div id="ar-scene-container" class="ar-scene-container">
+                                <div class="ar-placeholder">
+                                    <div class="placeholder-icon">🎯</div>
+                                    <p>Carga un modelo para ver la realidad aumentada</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </main>
         </div>
     </div>
-    
-    <!-- Loading Spinner -->
-    <div id="loading-spinner" class="loading-spinner" style="display: none;">
-        <div class="spinner"></div>
-        <p id="loading-text">Cargando avatar...</p>
-    </div>
-    
-    <!-- JavaScript -->
-    <script type="module" src="script.js"></script>
+
+    <script src="script.js"></script>
 </body>
 </html>
