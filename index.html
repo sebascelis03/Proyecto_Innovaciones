@@ -6,6 +6,10 @@
     <meta name="description" content="Aula virtual con realidad aumentada y carga de modelos 3D">
     <title>Aula Virtual AR</title>
 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="styles.css">
 
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
@@ -44,11 +48,11 @@
                     <button id="sidebar-toggle" class="sidebar-toggle">Menu</button>
                 </div>
                 <nav class="menu-list">
-                    <button class="menu-item">Ética</button>
-                    <button class="menu-item">Biología</button>
-                    <button class="menu-item">Religión</button>
-                    <button class="menu-item">Matemáticas</button>
-                    <button class="menu-item">Lengua Castellana</button>
+                    <button class="menu-item"><span class="menu-icon">🧬</span> Ética</button>
+                    <button class="menu-item"><span class="menu-icon">🧫</span> Biología</button>
+                    <button class="menu-item"><span class="menu-icon">🙏</span> Religión</button>
+                    <button class="menu-item"><span class="menu-icon">➗</span> Matemáticas</button>
+                    <button class="menu-item"><span class="menu-icon">📚</span> Lengua Castellana</button>
                 </nav>
                 <section class="sidebar-section">
                     <h3>Compañeros</h3>
@@ -58,13 +62,19 @@
 
             <main class="main-content">
                 <div class="tabs">
-                    <button class="tab-button active" data-tab="kahoot-tab">Kahoot</button>
-                    <button class="tab-button" data-tab="ar-tab">Realidad Aumentada</button>
+                    <button class="tab-button active" data-tab="kahoot-tab">
+                        <span class="tab-icon">🎮</span>
+                        Kahoot
+                    </button>
+                    <button class="tab-button" data-tab="ar-tab">
+                        <span class="tab-icon">🎯</span>
+                        Realidad Aumentada
+                    </button>
                 </div>
 
                 <section class="tab-panel" id="kahoot-tab">
                     <div class="panel-card">
-                        <h2>Kahoot</h2>
+                        <h2><span class="panel-icon">🎮</span> Kahoot</h2>
                         <p>Esta sección integra una experiencia de gamificación básica y permite acceder a Kahoot para actividades externas.</p>
                         <div class="kahoot-actions">
                             <button id="launch-kahoot" class="button">Abrir Kahoot</button>
@@ -86,7 +96,7 @@
 
                 <section class="tab-panel hidden" id="ar-tab">
                     <div class="panel-card">
-                        <h2>Realidad Aumentada</h2>
+                        <h2><span class="panel-icon">🎯</span> Realidad Aumentada</h2>
                         <p>Carga un modelo 3D en formato GLB para visualizarlo sobre el marcador Hiro en realidad aumentada.</p>
                         <div class="ar-actions">
                             <label class="file-label">
