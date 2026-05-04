@@ -1,0 +1,61 @@
+{
+  "name": "webarx-educational-platform",
+  "version": "1.0.0",
+  "description": "Sistema WebAR interactivo para educación virtual con avatares personalizados, integración Ready Player Me y gamificación Kahoot",
+  "main": "script.js",
+  "type": "module",
+  "scripts": {
+    "start": "http-server -p 8000 -o",
+    "serve": "http-server -p 8000",
+    "dev": "http-server -p 8000 --cors",
+    "build": "echo 'No build step required for WebAR'",
+    "test": "echo 'Tests not configured yet'",
+    "lint": "echo 'Linter not configured yet'",
+    "docs": "echo 'Documentation available in /docs folder'"
+  },
+  "keywords": [
+    "webAR",
+    "augmented-reality",
+    "a-frame",
+    "ar.js",
+    "education",
+    "virtual-classroom",
+    "ready-player-me",
+    "avatars",
+    "3d",
+    "gamification",
+    "kahoot"
+  ],
+  "author": "Equipo de Innovaciones Educativas",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tu-usuario/Proyecto_Innovaciones.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tu-usuario/Proyecto_Innovaciones/issues"
+  },
+  "homepage": "https://github.com/tu-usuario/Proyecto_Innovaciones#readme",
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  },
+  "dependencies": {},
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ],
+  "files": [
+    "index.html",
+    "styles.css",
+    "script.js",
+    "config.js",
+    "README.md",
+    "docs/",
+    "assets/",
+    "exemplos/"
+  ]
+}

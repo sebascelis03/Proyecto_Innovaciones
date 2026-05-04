@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Sistema WebAR de Realidad Aumentada para Aula Virtual con avatares personalizados">
+    <meta name="theme-color" content="#6366f1">
+    
+    <title>WebAR - Aula Virtual con Realidad Aumentada</title>
+    
+    <!-- A-Frame Framework -->
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    
+    <!-- AR.js for WebAR -->
+    <script src="https://cdn.jsdelivr.net/npm/ar.js@3.4.5/three.js/ar.js"></script>
+    
+    <!-- THREE.js (requerido por A-Frame) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <!-- GLB/GLTF Loader -->
+    <script src="https://cdn.jsdelivr.net/npm/three@r128/examples/js/loaders/GLTFLoader.js"></script>
+    
+    <!-- Draco Decoder for compressed models -->
+    <script src="https://cdn.jsdelivr.net/npm/three@r128/examples/js/loaders/DRACOLoader.js"></script>
+    
+    <!-- GSAP for animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    
+    <!-- CSS Styles -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- AR Scene -->
+    <a-scene embedded arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;">
+        <!-- Marker for Image Tracking -->
+        <a-marker id="marker" preset="hiro">
+            <!-- Avatar Container -->
+            <a-entity 
+                id="avatar-container"
+                position="0 0 0"
+                scale="1 1 1"
+                rotation="0 0 0">
+                
+                <!-- Default placeholder sphere -->
+                <a-sphere 
+                    id="placeholder"
+                    position="0 0 0"
+                    radius="0.3"
+                    color="#6366f1"
+                    opacity="0.8">
+                    <a-animation
+                        attribute="rotation"
+                        dur="4000"
+                        fill="forwards"
+                        repeat="indefinite"
+                        to="0 360 0">
+                    </a-animation>
+                </a-sphere>
+                
+                <!-- Lighting -->
+                <a-light 
+                    type="ambient"
+                    intensity="0.8"
+                    color="#ffffff">
+                </a-light>
+                
+                <a-light 
+                    type="directional"
+                    position="0 1 0"
+                    intensity="0.6"
+                    color="#ffffff">
+                </a-light>
+            </a-entity>
+        </a-marker>
+        
+        <!-- Camera setup -->
+        <a-camera position="0 0 0"></a-camera>
+    </a-scene>
+    
+    <!-- UI Overlay -->
+    <div id="ui-container" class="ui-container">
+        
+        <!-- Top Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1 class="title">🌐 WebAR Aula Virtual</h1>
+                <button id="btn-info" class="header-btn" title="Información">ℹ️</button>
+            </div>
+        </header>
+        
+        <!-- Control Panel -->
+        <div id="control-panel" class="control-panel">
+            <h2 class="panel-title">Control de Avatar</h2>
+            
+            <!-- Avatar Source Selection -->
+            <div class="section">
+                <h3 class="section-title">📥 Cargar Avatar</h3>
+                <div class="button-group">
+                    <button id="btn-rpm" class="btn btn-primary" title="Generar avatar en Ready Player Me">
+                        <span>🎨</span> Ready Player Me
+                    </button>
+                    <button id="btn-upload" class="btn btn-secondary" title="Cargar archivo GLB local">
+                        <span>📤</span> Subir GLB
+                    </button>
+                    <button id="btn-preset" class="btn btn-secondary" title="Usar avatar predefinido">
+                        <span>⭐</span> Preestablecido
+                    </button>
+                </div>
+                <input type="file" id="file-input" accept=".glb,.gltf,.obj" hidden>
+            </div>
+            
+            <!-- Avatar URL Input -->
+            <div class="section">
+                <label for="avatar-url" class="label">🔗 URL del Avatar GLB:</label>
+                <div class="input-group">
+                    <input 
+                        type="text" 
+                        id="avatar-url" 
+                        class="input" 
+                        placeholder="https://..."
+                        maxlength="500">
+                    <button id="btn-load-url" class="btn btn-small" title="Cargar desde URL">⬆️</button>
+                </div>
+                <small class="help-text">Ingresa URL de avatar GLB o Ready Player Me</small>
+            </div>
+            
+            <!-- Interaction Controls -->
+            <div class="section">
+                <h3 class="section-title">🎮 Interactividad</h3>
+                <div class="button-group">
+                    <button id="btn-rotate-left" class="btn btn-control" title="Girar izquierda">⬅️</button>
+                    <button id="btn-rotate-right" class="btn btn-control" title="Girar derecha">➡️</button>
+                    <button id="btn-zoom-in" class="btn btn-control" title="Aumentar zoom">🔍+</button>
+                    <button id="btn-zoom-out" class="btn btn-control" title="Disminuir zoom">🔍-</button>
+                    <button id="btn-reset" class="btn btn-control" title="Reiniciar posición">🔄</button>
+                </div>
+            </div>
+            
+            <!-- Display Info -->
+            <div class="section">
+                <div id="avatar-info" class="info-box">
+                    <p class="info-label">📊 Información del Avatar:</p>
+                    <p id="info-text" class="info-text">Cargando...</p>
+                </div>
+            </div>
+            
+            <!-- Gamification -->
+            <div class="section">
+                <h3 class="section-title">🎮 Gamificación</h3>
+                <div class="button-group">
+                    <button id="btn-kahoot" class="btn btn-gamification">
+                        <span>🎯</span> Acceder a Kahoot
+                    </button>
+                </div>
+                <div class="input-group">
+                    <input 
+                        type="text" 
+                        id="user-nickname" 
+                        class="input" 
+                        placeholder="Tu nombre de usuario"
+                        maxlength="50">
+                </div>
+            </div>
+            
+            <!-- Status Messages -->
+            <div id="status-message" class="status-message" style="display: none;"></div>
+        </div>
+        
+        <!-- Bottom Info Bar -->
+        <footer class="footer">
+            <div class="footer-content">
+                <span id="status-indicator" class="status-indicator"></span>
+                <span id="performance-info" class="performance-info">FPS: --</span>
+                <span id="marker-status" class="marker-status">🔴 Sin marcador</span>
+            </div>
+        </footer>
+    </div>
+    
+    <!-- Info Modal -->
+    <div id="info-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <button class="modal-close">&times;</button>
+            <h2>ℹ️ Información del Sistema</h2>
+            <div class="modal-body">
+                <h3>Requisitos:</h3>
+                <ul>
+                    <li>✅ Navegador con soporte WebGL</li>
+                    <li>✅ Cámara web habilitada</li>
+                    <li>✅ Conexión a Internet (para cargar avatares)</li>
+                    <li>✅ Marcador de imagen "Hiro" visible</li>
+                </ul>
+                
+                <h3>Instrucciones:</h3>
+                <ol>
+                    <li>Permite el acceso a la cámara cuando se solicite</li>
+                    <li>Muestra el marcador "Hiro" a la cámara</li>
+                    <li>Genera tu avatar en Ready Player Me o carga uno existente</li>
+                    <li>¡Interactúa con tu avatar en realidad aumentada!</li>
+                </ol>
+                
+                <h3>Tecnologías Utilizadas:</h3>
+                <ul>
+                    <li>🎨 A-Frame (Framework AR)</li>
+                    <li>📡 AR.js (Detección de marcadores)</li>
+                    <li>👤 Ready Player Me (Avatares personalizados)</li>
+                    <li>🎯 Kahoot (Gamificación)</li>
+                </ul>
+                
+                <h3>¿Necesitas ayuda?</h3>
+                <p>Consulta la documentación en <code>docs/GUIA_IMPLEMENTACION.md</code></p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Loading Spinner -->
+    <div id="loading-spinner" class="loading-spinner" style="display: none;">
+        <div class="spinner"></div>
+        <p id="loading-text">Cargando avatar...</p>
+    </div>
+    
+    <!-- JavaScript -->
+    <script type="module" src="script.js"></script>
+</body>
+</html>
