@@ -1,315 +1,68 @@
-# 🌐 WebAR - Prototipo de Realidad Aumentada para Aula Virtual
+# 🧪 AulaRA - Laboratorio de Realidad Aumentada Educativa
 
-Sistema interactivo de Realidad Aumentada basado en WebAR que permite a los usuarios cargar avatares personalizados desde Ready Player Me y visualizarlos en entorno AR sobre marcadores de imagen.
+AulaRA es una plataforma de educación inmersiva (SPA) diseñada para transformar el aprendizaje mediante el uso de **Realidad Aumentada (WebAR)** y **Gamificación**. Permite a estudiantes y docentes visualizar conceptos complejos en 3D y poner a prueba sus conocimientos a través de misiones interactivas.
 
 ## ✨ Características Principales
 
-- 📱 **Acceso desde navegador móvil** - Sin necesidad de instalar aplicaciones
-- 🎨 **Avatares personalizados** - Integración con Ready Player Me API
-- 🔄 **Modelos 3D interactivos** - Carga de archivos GLB personalizados
-- 🎮 **Controles intuitivos** - Zoom, rotación, animaciones
-- 🎯 **Integración Kahoot** - Conexión con herramientas de gamificación
-- ⚡ **Rendimiento optimizado** - 30+ FPS en dispositivos móviles
-- 🔍 **Detección de marcadores** - Usando AR.js y A-Frame
+- 🔬 **Laboratorio RA Profesional**: Sistema de dos fases para la gestión de modelos 3D.
+  - **Vista Previa**: Previsualización instantánea de archivos `.glb` y `.gltf` sin activar la cámara.
+  - **Proyector RA**: Inyección dinámica del modelo en el mundo real usando marcadores.
+- 🎮 **Misiones Gamificadas (Estilo Kahoot)**: Sistema de evaluación interno con temporizador, feedback visual y puntuaciones en tiempo real (Biología, Matemáticas, Ética).
+- 📸 **Control de Privacidad**: Sistema de encendido/apagado forzoso de cámara web para mayor seguridad del usuario.
+- 🎨 **Diseño Moderno (Glassmorphism)**: Interfaz estética con efectos de desenfoque, degradados neón y animaciones fluidas.
+- 📱 **Web-Based**: Funciona directamente en el navegador sin instalaciones (requiere HTTPS o localhost).
 
 ## 🚀 Inicio Rápido
 
 ### Requisitos
-- Navegador moderno con soporte WebGL (Chrome, Firefox, Safari)
-- Cámara web/móvil habilitada
-- Conexión a Internet
-- Marcador "Hiro" impreso o visible en pantalla
+- Navegador moderno (Chrome, Edge, Safari o Firefox).
+- Cámara web operativa.
+- Un marcador **Hiro** (impreso o en otra pantalla).
 
-### Instalación
-
-1. **Clonar o descargar el proyecto**
+### Instalación Local
+1. Descarga o clona el repositorio.
+2. Abre la carpeta en tu terminal.
+3. Sirve el proyecto usando un servidor local (obligatorio para la cámara):
    ```bash
-   git clone <repository-url>
-   cd Proyecto_Innovaciones
-   ```
-
-2. **Servir localmente (requiere servidor HTTP)**
-   ```bash
-   # Con Python 3
-   python -m http.server 8000
+   # Opción con Python
+   python -m http.server 3000
    
-   # Con Python 2
-   python -m SimpleHTTPServer 8000
-   
-   # Con Node.js (http-server)
-   npx http-server
+   # Opción con Node.js
+   npx http-server -p 3000
    ```
-
-3. **Abrir en navegador**
-   ```
-   http://localhost:8000
-   ```
-
-4. **Permitir acceso a cámara** cuando se solicite
+4. Accede a `http://localhost:3000`.
 
 ## 📖 Guía de Uso
 
-### Paso 1: Mostrar Marcador
-Imprime o muestra en pantalla el marcador "Hiro" que encontrarás en:
-- Carpeta: `docs/marcadores/`
-- O en línea: [Descarga marcador](https://ar-js-org.github.io/AR.js-Docs/marker-based/marker_training/)
+### 1. Acceso
+Ingresa un nombre de usuario (ej: `estudiante1`) para entrar al dashboard principal.
 
-### Paso 2: Cargar Avatar
-Elige una opción:
+### 2. Laboratorio RA
+- **Pestaña Modelo 3D**: Haz clic en "Subir Archivo" y selecciona un modelo `.glb`. Verás una vista previa 3D interactiva de inmediato.
+- **Pestaña Cámara RA**: Haz clic en "Activar Cámara". Cuando veas el video, apunta al **Marcador Hiro** para proyectar tu modelo. 
+- **Apagar**: Usa el botón "🛑 Apagar Cámara" para desconectar el hardware de video en cualquier momento.
 
-**Opción A: Ready Player Me (Recomendado)**
-- Click en botón "🎨 Ready Player Me"
-- Se abrirá el editor en nueva ventana
-- Personaliza tu avatar
-- Click en "Export" cuando termines
-- El avatar cargará automáticamente
+### 3. Misiones
+- Ve a la sección **Misiones**.
+- Elige una materia (Biología, Matemáticas o Ética).
+- Responde las preguntas antes de que se agote el tiempo (15 segundos por pregunta).
 
-**Opción B: Subir GLB Local**
-- Click en "📤 Subir GLB"
-- Selecciona un archivo GLB de tu computadora
-- El avatar cargará en la escena
+## 🛠️ Tecnologías Utilizadas
 
-**Opción C: Avatar Preestablecido**
-- Click en "⭐ Preestablecido"
-- Carga un avatar de ejemplo
+- **A-Frame (1.4.2)**: Motor para la escena de Realidad Aumentada.
+- **AR.js**: Detección de marcadores y seguimiento de cámara.
+- **Google Model-Viewer**: Previsualización 3D optimizada y ligera.
+- **Vanilla JavaScript (ES6+)**: Lógica de la aplicación y sistema de SPA.
+- **CSS3 Moderno**: Diseño responsivo y efectos visuales de alta gama.
 
-### Paso 3: Interactuar
-- **Girar**: Botones ⬅️ ➡️
-- **Zoom**: Botones 🔍+ 🔍-
-- **Reset**: Botón 🔄
-- **Toque directo**: En dispositivo móvil, toca y arrastra para rotar
+## 🎯 Marcadores
+Para proyectar los modelos, utiliza el marcador estándar **Hiro**. Puedes encontrarlo aquí:
+[Descargar Marcador Hiro](https://raw.githubusercontent.com/AR-js-org/AR.js/master/data/images/hiro.png)
 
-### Paso 4: Gamificar
-- Ingresa tu nombre de usuario
-- Click en "🎯 Acceder a Kahoot"
-- Participa en el quiz con tu avatar personalizado
-
-## 🏗️ Estructura del Proyecto
-
-```
-Proyecto_Innovaciones/
-├── index.html                 # Página principal
-├── styles.css                 # Estilos CSS
-├── script.js                  # Lógica principal (módulo ES6)
-├── config.js                  # Configuración global
-├── PROPUESTA_TECNICA.md       # Documento técnico completo
-├── README.md                  # Este archivo
-├── docs/
-│   ├── ARQUITECTURA.md        # Diagrama de arquitectura
-│   ├── GUIA_IMPLEMENTACION.md # Guía detallada de implementación
-│   ├── MARCADORES.md          # Información sobre marcadores
-│   └── marcadores/
-│       └── hiro.png           # Marcador Hiro para pruebas
-├── assets/
-│   ├── markers/               # Carpeta para marcadores NFT
-│   └── models/                # Modelos 3D adicionales
-└── exemplos/
-    ├── robot-avatar.glb       # Ejemplo de avatar
-    └── mascot-avatar.glb      # Otro ejemplo
-```
-
-## 🔧 Configuración
-
-Edita `config.js` para personalizar:
-
-```javascript
-// Tamaño del marcador
-MARKER_SIZE: 0.1
-
-// Velocidad de rotación
-ROTATION_SPEED: 0.01
-
-// Rango de zoom
-ZOOM_MIN: 0.5
-ZOOM_MAX: 2.0
-
-// URL de Ready Player Me
-EDITOR_URL: 'https://rpm.me'
-```
-
-## 📚 Tecnologías
-
-| Tecnología | Versión | Función |
-|-----------|---------|---------|
-| A-Frame | 1.4.2 | Framework AR/VR |
-| AR.js | 3.4.5 | Detección de marcadores |
-| Three.js | r128 | Motor 3D WebGL |
-| GSAP | 3.12.2 | Animaciones |
-| Ready Player Me API | v1 | Generación de avatares |
-
-## 🎮 Atajos de Teclado
-
-| Atajo | Acción |
-|-------|--------|
-| `Ctrl+R` | Reiniciar avatar |
-| `Ctrl+O` | Abrir archivo |
-| `Ctrl+?` | Ayuda |
-
-## 🛡️ Seguridad
-
-- ✅ Todas las conexiones requieren HTTPS (excepto localhost)
-- ✅ Validación de URLs y archivos
-- ✅ CORS configurado para dominios autorizados
-- ✅ Sin almacenamiento de datos personales en servidor
-- ✅ Caché local seguro
-
-## 📱 Compatibilidad
-
-### Dispositivos Soportados
-
-| Dispositivo | Navegador | Estado |
-|-----------|-----------|--------|
-| iPhone/iPad | Safari 13+ | ✅ Soportado |
-| Android | Chrome 90+ | ✅ Soportado |
-| Desktop | Chrome/Firefox | ✅ Soportado |
-| Desktop | Safari | ✅ Soportado |
-
-### Requisitos Mínimos
-
-- **SO:** iOS 13+ o Android 8+
-- **Cámara:** 5MP mínimo
-- **RAM:** 2GB mínimo (4GB recomendado)
-- **Almacenamiento:** 100MB libres
-- **Conexión:** 4G/WiFi 5+ Mbps
-
-## 🎨 Personalización
-
-### Cambiar Colores
-
-Edita las variables en `styles.css`:
-
-```css
---primary: #6366f1;      /* Azul */
---secondary: #ec4899;     /* Rosa */
---danger: #ef4444;        /* Rojo */
-```
-
-### Agregar Marcadores Personalizados
-
-1. Genera marcador NFT en [AR.js Marker Creator](https://carnaux.github.io/NFT-Marker-Creator/)
-2. Coloca archivos `.fset`, `.iset`, `.f3d` en carpeta `assets/markers/`
-3. Actualiza `config.js` con la ruta
-
-### Usar Modelos Propios
-
-1. Exporta modelo en formato GLB desde Blender/Maya/etc.
-2. Coloca archivo en `exemplos/` o sube URL
-3. Carga desde interfaz o URL
-
-## 🐛 Solución de Problemas
-
-### Marcador no se detecta
-- Mejora la iluminación
-- Aumenta el tamaño del marcador impreso
-- Mantén la cámara perpendicular al marcador
-- Prueba con el marcador Hiro de ejemplo
-
-### Modelo parpadea o desaparece
-- Aumentar clipping planes en config.js
-- Reducir tamaño del marcador
-- Mejorar iluminación ambiental
-
-### Bajo rendimiento/FPS bajo
-- Usar modelo 3D más simple
-- Reducir calidad en config.js
-- Desactivar rotación automática
-- Usar dispositivo con más RAM
-
-### CORS error
-- Asegúrate de usar HTTPS
-- Verifica que el servidor permita CORS
-- Usa CDN de confianza para modelos
-
-### Avatar no carga desde Ready Player Me
-- Verifica que el formato sea GLB
-- Comprueba que la URL sea válida
-- Revisa la consola del navegador para errores
-
-## 🤝 Integración con Kahoot
-
-La integración con Kahoot permite:
-
-1. Transferir nombre de usuario
-2. Abrir sesión de quiz en nueva pestaña
-3. Mantener contexto educativo
-
-**Parámetros soportados:**
-```javascript
-username: "nombre_usuario"  // Nickname del estudiante
-groupId: "grupo_id"         // ID del grupo (opcional)
-```
-
-## 📊 Monitoreo y Analytics
-
-El sistema registra:
-- FPS en tiempo real
-- Detección de marcadores
-- Modelos cargados
-- Errores de carga
-
-Accede a debug en consola:
-```javascript
-WebARDebug.state           // Estado global
-WebARDebug.loadModel(url)  // Cargar modelo
-WebARDebug.showMessage()   // Mostrar mensaje
-```
-
-## 🚀 Despliegue
-
-### Servidor Local (Desarrollo)
-```bash
-python -m http.server 8000
-```
-
-### Netlify
-```bash
-npm install -g netlify-cli
-netlify deploy --prod --dir .
-```
-
-### GitHub Pages
-```bash
-git push origin main
-# Habilitar Pages en configuración del repo
-```
-
-### Servidor Propio
-1. Copiar archivos a servidor web
-2. Configurar HTTPS/SSL
-3. Validar CORS headers
-4. Probar en dispositivos móviles
-
-## 📝 Licencia
-
-Este proyecto es de código abierto. Consulta LICENSE.md para más detalles.
-
-## 🙏 Agradecimientos
-
-- **A-Frame Community** - Framework AR/VR
-- **AR.js** - Detección de marcadores
-- **Ready Player Me** - API de avatares
-- **Three.js** - Motor 3D
-
-## 📞 Soporte
-
-Para reportar bugs o sugerencias:
-1. Abre un issue en el repositorio
-2. Describe el problema detalladamente
-3. Adjunta capturas de pantalla si es posible
-4. Incluye información del navegador/dispositivo
-
-## 🔗 Enlaces Útiles
-
-- [Documentación A-Frame](https://aframe.io/docs/)
-- [Documentación AR.js](https://ar-js-org.github.io/AR.js-Docs/)
-- [Ready Player Me](https://readyplayer.me/)
-- [Kahoot](https://kahoot.it/)
-- [Three.js Documentation](https://threejs.org/docs/)
+## 🛡️ Seguridad y Privacidad
+El sistema incluye un **Interceptor de Hardware** que garantiza que el flujo de video se detenga físicamente cuando el usuario cierra la sesión de RA, protegiendo la privacidad del estudiante.
 
 ---
-
-**Versión:** 1.0  
+**Versión:** 2.0 (Edición Laboratorio)  
 **Última actualización:** Mayo 2026  
-**Autor:** Equipo de Innovaciones Educativas
-
-¡Disfruta creando experiencias educativas inmersivas con WebAR! 🎉
+**Desarrollado para:** Innovación Educativa AulaRA
