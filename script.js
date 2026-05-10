@@ -1,191 +1,356 @@
-const users = ["user_1", "user_2", "user_3"];
-const storageKey = "aula_virtual_usuario";
-const defaultModel = "https://cdn.aframe.io/test-models/models/boombox/boombox.glb";
+// ========== STATE ==========
+const STORAGE_KEY = 'aulara_username';
 
-const loginScreen = document.getElementById("login-screen");
-const appScreen = document.getElementById("app-screen");
-const loginForm = document.getElementById("login-form");
-const usernameInput = document.getElementById("username");
-const passwordInput = document.getElementById("password");
-const loginError = document.getElementById("login-error");
-const activeUserLabel = document.getElementById("active-user");
-const logoutButton = document.getElementById("logout-button");
-const teamList = document.getElementById("team-list");
-const tabButtons = document.querySelectorAll(".tab-button");
-const tabPanels = document.querySelectorAll(".tab-panel");
-const launchKahootButton = document.getElementById("launch-kahoot");
-const startQuizButton = document.getElementById("start-quiz");
-const quizContainer = document.getElementById("quiz-container");
-const quizResult = document.getElementById("quiz-result");
-const arStatus = document.getElementById("ar-status");
-const arSceneContainer = document.getElementById("ar-scene-container");
-const glbInput = document.getElementById("glb-input");
-const sidebarToggle = document.getElementById("sidebar-toggle");
-const sidebar = document.getElementById("sidebar");
+// ========== DOM ==========
+const loginScreen   = document.getElementById('login-screen');
+const appScreen     = document.getElementById('app-screen');
+const loginForm     = document.getElementById('login-form');
+const usernameInput = document.getElementById('username');
+const appBg         = document.getElementById('app-bg');
+const displayUsername = document.getElementById('display-username');
+const miniInitial   = document.getElementById('mini-avatar-initial');
+const logoutBtn     = document.getElementById('logout-btn');
+const navItems      = document.querySelectorAll('.nav-item');
+const sectionPanels = document.querySelectorAll('.section-panel');
 
-let currentUser = null;
-let currentTab = "kahoot-tab";
-let arSceneCreated = false;
-let modelEntity = null;
-
+// ========== LOGIN ==========
 function init() {
-    const savedUser = localStorage.getItem(storageKey);
-    if (savedUser && users.includes(savedUser)) {
-        openApp(savedUser);
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) enterApp(saved);
+}
+
+loginForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const user = usernameInput.value.trim();
+    if (user.length > 1) {
+        localStorage.setItem(STORAGE_KEY, user);
+        enterApp(user);
+    }
+});
+
+function enterApp(username) {
+    displayUsername.textContent = username;
+    miniInitial.textContent = username.charAt(0).toUpperCase();
+    loginScreen.classList.remove('active');
+    appScreen.classList.add('active');
+    appBg.classList.add('active');
+    usernameInput.value = '';
+}
+
+logoutBtn.addEventListener('click', () => {
+    localStorage.removeItem(STORAGE_KEY);
+    appScreen.classList.remove('active');
+    loginScreen.classList.add('active');
+    appBg.classList.remove('active');
+});
+
+// ========== SPA NAV ==========
+navItems.forEach(item => {
+    item.addEventListener('click', () => {
+        navItems.forEach(n => n.classList.remove('active'));
+        item.classList.add('active');
+        sectionPanels.forEach(p => p.classList.remove('active'));
+        const target = document.getElementById(item.getAttribute('data-target'));
+        if (target) target.classList.add('active');
+    });
+});
+
+// ================================================================
+//  LAB RA — Inyección dinámica y Vista Previa
+// ================================================================
+
+
+const startArBtn   = document.getElementById('start-ar-btn');
+const arViewport   = document.getElementById('ar-viewport');
+const arPlaceholder = document.getElementById('ar-placeholder');
+const modelUpload  = document.getElementById('model-upload');
+const uploadStatus = document.getElementById('upload-status');
+
+// Contenedores
+const previewContainer = document.getElementById('preview-model-container');
+let arContainer = null;  // se setea cuando arranca AR
+let userBlobURL = null;
+
+if (modelUpload) {
+    modelUpload.addEventListener('change', function (e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const ext = file.name.split('.').pop().toLowerCase();
+        if (ext !== 'glb' && ext !== 'gltf') {
+            if (uploadStatus) {
+                uploadStatus.textContent = '❌ Error: Solo .glb o .gltf';
+                uploadStatus.style.color = '#ef4444';
+            }
+            return;
+        }
+
+        if (userBlobURL) URL.revokeObjectURL(userBlobURL);
+        userBlobURL = URL.createObjectURL(file);
+
+        if (uploadStatus) {
+            uploadStatus.textContent = '✅ Cargado: ' + file.name;
+            uploadStatus.style.color = '#10b981';
+        }
+
+        // 1. Inyectar siempre en el Preview 3D
+        injectModelToContainer(previewContainer, 'loaded-preview-model', 'preview-default-box', 1.5);
+
+        // 2. Inyectar en el AR si ya está activo
+        if (arContainer) {
+            injectModelToContainer(arContainer, 'loaded-ar-model', 'default-box', 0.5);
+        }
+    });
+}
+
+function injectModelToContainer(container, entityId, defaultBoxId, scale) {
+    if (!container || !userBlobURL) return;
+
+    // Quitar caja por defecto
+    const box = document.getElementById(defaultBoxId);
+    if (box) box.setAttribute('visible', 'false');
+
+    // Quitar modelo anterior
+    const prev = document.getElementById(entityId);
+    if (prev) prev.parentNode.removeChild(prev);
+
+    // Añadir nuevo
+    const model = document.createElement('a-entity');
+    model.setAttribute('id', entityId);
+    model.setAttribute('gltf-model', userBlobURL);
+    model.setAttribute('scale', `${scale} ${scale} ${scale}`);
+    
+    // Centrarlo un poco mejor
+    model.setAttribute('position', '0 0 0');
+    container.appendChild(model);
+}
+
+// Botón de inicio: crear la escena AR
+if (startArBtn) {
+    startArBtn.addEventListener('click', () => {
+        startArBtn.textContent = '⏳ Iniciando cámara...';
+        startArBtn.disabled = true;
+        
+        if (arPlaceholder) arPlaceholder.style.display = 'none';
+
+        const sceneHTML = `
+            <a-scene embedded
+                     arjs="sourceType: webcam; debugUIEnabled: false;"
+                     vr-mode-ui="enabled: false"
+                     renderer="logarithmicDepthBuffer: true;"
+                     style="width:100%;height:100%;">
+                <a-marker preset="hiro">
+                    <a-entity id="ar-model-container"
+                              position="0 0 0"
+                              rotation="-90 0 0"
+                              animation="property: rotation; to: -90 360 0; loop: true; dur: 10000; easing: linear;">
+                        <a-box id="default-box" color="#10b981" material="wireframe: true; opacity: 0.8" scale="0.5 0.5 0.5"></a-box>
+                    </a-entity>
+                </a-marker>
+                <a-entity camera></a-entity>
+            </a-scene>
+            <div class="ar-overlay">
+                <p>Muestra el <strong>Marcador Hiro</strong> a la cámara para ver el modelo proyectado.</p>
+            </div>
+        `;
+
+        arViewport.insertAdjacentHTML('beforeend', sceneHTML);
+        const arScene = arViewport.querySelector('a-scene');
+
+        arScene.addEventListener('loaded', () => {
+            arContainer = document.getElementById('ar-model-container');
+            if (userBlobURL) {
+                injectModelToContainer(arContainer, 'loaded-ar-model', 'default-box', 0.5);
+            }
+        });
+    });
+}
+
+// ================================================================
+//  MISIONES — Sistema tipo Kahoot
+// ================================================================
+
+// Banco de preguntas por materia
+const quizBank = {
+    biologia: [
+        { q: '¿Cuál es la unidad básica de la vida?', opts: ['Átomo', 'Célula', 'Molécula', 'Tejido'], answer: 1 },
+        { q: '¿Qué organelo realiza la fotosíntesis?', opts: ['Mitocondria', 'Ribosoma', 'Cloroplasto', 'Lisosoma'], answer: 2 },
+        { q: '¿El ADN se encuentra principalmente en…?', opts: ['Citoplasma', 'Membrana', 'Núcleo', 'Pared celular'], answer: 2 },
+        { q: '¿Qué tipo de célula NO tiene núcleo definido?', opts: ['Eucariota', 'Procariota', 'Animal', 'Vegetal'], answer: 1 },
+        { q: '¿Cuál es la molécula energética de la célula?', opts: ['ADN', 'ARN', 'ATP', 'Glucosa'], answer: 2 },
+    ],
+    matematicas: [
+        { q: '¿Cuánto es 15 × 12?', opts: ['170', '180', '190', '200'], answer: 1 },
+        { q: '¿Cuál es la raíz cuadrada de 144?', opts: ['10', '11', '12', '14'], answer: 2 },
+        { q: 'Si x + 5 = 12, ¿cuánto vale x?', opts: ['5', '6', '7', '8'], answer: 2 },
+        { q: '¿Cuántos grados tiene un triángulo?', opts: ['90°', '180°', '270°', '360°'], answer: 1 },
+        { q: '¿Cuánto es 2³?', opts: ['4', '6', '8', '16'], answer: 2 },
+    ],
+    etica: [
+        { q: '¿Qué estudia la ética?', opts: ['La naturaleza', 'La moral y valores', 'Los números', 'El universo'], answer: 1 },
+        { q: '¿Quién es el autor de "La República"?', opts: ['Aristóteles', 'Platón', 'Sócrates', 'Kant'], answer: 1 },
+        { q: '¿Qué es un dilema ético?', opts: ['Un problema matemático', 'Un conflicto entre valores', 'Una ley física', 'Un tipo de arte'], answer: 1 },
+        { q: '¿Qué principio dice "no hagas a otros lo que no quieres para ti"?', opts: ['Justicia', 'Regla de oro', 'Autonomía', 'Beneficencia'], answer: 1 },
+        { q: '¿Qué valor implica decir la verdad?', opts: ['Lealtad', 'Honestidad', 'Respeto', 'Tolerancia'], answer: 1 },
+    ],
+};
+
+// Estado del quiz
+let currentQuiz     = null;  // array de preguntas actuales
+let currentIndex    = 0;
+let score           = 0;
+let timerInterval   = null;
+let timeLeft        = 0;
+const QUESTION_TIME = 15; // segundos por pregunta
+
+// DOM del quiz
+const quizLobby     = document.getElementById('quiz-lobby');
+const quizArena     = document.getElementById('quiz-arena');
+const quizResults   = document.getElementById('quiz-results');
+const subjectBtns   = document.querySelectorAll('.subject-btn');
+const questionText  = document.getElementById('question-text');
+const answersGrid   = document.getElementById('answers-grid');
+const timerBar      = document.getElementById('timer-bar');
+const timerText     = document.getElementById('timer-text');
+const qCounter      = document.getElementById('question-counter');
+const scoreDisplay  = document.getElementById('score-display');
+const finalScore    = document.getElementById('final-score');
+const finalTotal    = document.getElementById('final-total');
+const finalMsg      = document.getElementById('final-message');
+const restartBtn    = document.getElementById('restart-quiz');
+
+// Iniciar quiz al elegir materia
+subjectBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+        const subject = btn.getAttribute('data-subject');
+        startQuiz(subject);
+    });
+});
+
+function startQuiz(subject) {
+    currentQuiz  = shuffleArray([...quizBank[subject]]);
+    currentIndex = 0;
+    score        = 0;
+    scoreDisplay.textContent = '0';
+
+    quizLobby.classList.add('hidden');
+    quizResults.classList.add('hidden');
+    quizArena.classList.remove('hidden');
+
+    loadQuestion();
+}
+
+function loadQuestion() {
+    if (currentIndex >= currentQuiz.length) {
+        endQuiz();
+        return;
+    }
+
+    const q = currentQuiz[currentIndex];
+    questionText.textContent = q.q;
+    qCounter.textContent = `${currentIndex + 1} / ${currentQuiz.length}`;
+
+    // Colores Kahoot clásicos
+    const colors = ['#e21b3c', '#1368ce', '#d89e00', '#26890c'];
+    const icons  = ['▲', '◆', '●', '■'];
+
+    answersGrid.innerHTML = '';
+    q.opts.forEach((opt, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'answer-btn';
+        btn.style.background = colors[i];
+        btn.innerHTML = `<span class="answer-icon">${icons[i]}</span><span>${opt}</span>`;
+        btn.addEventListener('click', () => selectAnswer(i, btn));
+        answersGrid.appendChild(btn);
+    });
+
+    // Timer
+    startTimer();
+}
+
+function startTimer() {
+    clearInterval(timerInterval);
+    timeLeft = QUESTION_TIME;
+    timerText.textContent = timeLeft;
+    timerBar.style.width = '100%';
+
+    timerInterval = setInterval(() => {
+        timeLeft--;
+        timerText.textContent = timeLeft;
+        timerBar.style.width = ((timeLeft / QUESTION_TIME) * 100) + '%';
+
+        if (timeLeft <= 5) timerBar.style.background = '#ef4444';
+        else timerBar.style.background = 'linear-gradient(90deg, #6366f1, #06b6d4)';
+
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            revealAnswer(-1); // Tiempo agotado
+        }
+    }, 1000);
+}
+
+function selectAnswer(idx, btn) {
+    clearInterval(timerInterval);
+    revealAnswer(idx);
+}
+
+function revealAnswer(chosen) {
+    const q = currentQuiz[currentIndex];
+    const btns = answersGrid.querySelectorAll('.answer-btn');
+
+    btns.forEach((btn, i) => {
+        btn.style.pointerEvents = 'none';
+        if (i === q.answer) {
+            btn.classList.add('correct');
+        } else if (i === chosen && chosen !== q.answer) {
+            btn.classList.add('wrong');
+        } else {
+            btn.style.opacity = '0.4';
+        }
+    });
+
+    if (chosen === q.answer) {
+        score++;
+        scoreDisplay.textContent = score;
+    }
+
+    currentIndex++;
+    setTimeout(loadQuestion, 1500);
+}
+
+function endQuiz() {
+    quizArena.classList.add('hidden');
+    quizResults.classList.remove('hidden');
+
+    finalScore.textContent = score;
+    finalTotal.textContent = currentQuiz.length;
+
+    const pct = (score / currentQuiz.length) * 100;
+    if (pct === 100) {
+        finalMsg.textContent = '🏆 ¡Perfecto! ¡Eres un genio!';
+        finalMsg.style.color = '#fbbf24';
+    } else if (pct >= 60) {
+        finalMsg.textContent = '🎉 ¡Buen trabajo! Sigue así.';
+        finalMsg.style.color = '#10b981';
     } else {
-        showLogin();
-    }
-    attachEvents();
-}
-
-function attachEvents() {
-    loginForm.addEventListener("submit", handleLogin);
-    logoutButton.addEventListener("click", handleLogout);
-    tabButtons.forEach((button) => button.addEventListener("click", handleTabChange));
-    launchKahootButton.addEventListener("click", () => window.open("https://kahoot.it", "_blank"));
-    startQuizButton.addEventListener("click", toggleQuiz);
-    glbInput.addEventListener("change", handleModelUpload);
-    sidebarToggle.addEventListener("click", () => sidebar.classList.toggle("open"));
-    window.addEventListener("resize", closeSidebarOnResize);
-    document.querySelectorAll(".quiz-option").forEach((button) => {
-        button.addEventListener("click", handleQuizAnswer);
-    });
-}
-
-function handleLogin(event) {
-    event.preventDefault();
-    const username = usernameInput.value.trim();
-    const password = passwordInput.value.trim();
-    if (!users.includes(username) || password !== username) {
-        loginError.textContent = "Usuario o contraseña inválidos.";
-        loginError.classList.remove("hidden");
-        return;
-    }
-    loginError.classList.add("hidden");
-    localStorage.setItem(storageKey, username);
-    openApp(username);
-}
-
-function openApp(user) {
-    currentUser = user;
-    loginScreen.classList.add("hidden");
-    appScreen.classList.remove("hidden");
-    activeUserLabel.textContent = user;
-    renderTeamList(user);
-    setActiveTab(currentTab);
-}
-
-function showLogin() {
-    loginScreen.classList.remove("hidden");
-    appScreen.classList.add("hidden");
-    usernameInput.focus();
-}
-
-function handleLogout() {
-    localStorage.removeItem(storageKey);
-    currentUser = null;
-    arSceneContainer.innerHTML = `
-        <div class="ar-placeholder">
-            <div class="placeholder-icon">🎯</div>
-            <p>Carga un modelo para ver la realidad aumentada</p>
-        </div>
-    `;
-    arSceneCreated = false;
-    modelEntity = null;
-    showLogin();
-}
-
-function renderTeamList(user) {
-    teamList.innerHTML = "";
-    users.filter((item) => item !== user).forEach((item) => {
-        const li = document.createElement("li");
-        li.textContent = item;
-        li.className = "team-item";
-        teamList.appendChild(li);
-    });
-}
-
-function handleTabChange(event) {
-    const tabId = event.currentTarget.dataset.tab;
-    setActiveTab(tabId);
-}
-
-function setActiveTab(tabId) {
-    currentTab = tabId;
-    tabButtons.forEach((button) => {
-        button.classList.toggle("active", button.dataset.tab === tabId);
-    });
-    tabPanels.forEach((panel) => {
-        panel.classList.toggle("hidden", panel.id !== tabId);
-    });
-    if (tabId === "ar-tab") {
-        arStatus.textContent = arSceneCreated ? "Modelo cargado. Coloca el marcador Hiro frente a la cámara." : "Selecciona un modelo GLB para comenzar.";
+        finalMsg.textContent = '💪 ¡No te rindas! Inténtalo de nuevo.';
+        finalMsg.style.color = '#ef4444';
     }
 }
 
-function toggleQuiz() {
-    quizContainer.classList.toggle("hidden");
-    quizResult.classList.add("hidden");
+restartBtn?.addEventListener('click', () => {
+    quizResults.classList.add('hidden');
+    quizLobby.classList.remove('hidden');
+});
+
+// Utilidad
+function shuffleArray(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
 }
 
-function handleModelUpload(event) {
-    const file = event.target.files[0];
-    if (!file) {
-        return;
-    }
-    const extension = file.name.split('.').pop().toLowerCase();
-    if (extension !== 'glb') {
-        arStatus.textContent = 'Solo se permite archivo GLB.';
-        return;
-    }
-    const url = URL.createObjectURL(file);
-    loadModel(url);
-    setActiveTab("ar-tab");
-}
-
-function createARScene() {
-    arSceneContainer.innerHTML = `
-        <a-scene embedded arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;">
-            <a-marker preset="hiro">
-                <a-entity id="model-entity" gltf-model="${defaultModel}" scale="0.4 0.4 0.4" position="0 0 0"></a-entity>
-                <a-light type="ambient" intensity="0.8"></a-light>
-                <a-light type="directional" position="0 1 0" intensity="0.5"></a-light>
-            </a-marker>
-            <a-camera position="0 0 0"></a-camera>
-        </a-scene>
-    `;
-    arSceneCreated = true;
-    arStatus.textContent = 'Modelo cargado. Coloca el marcador Hiro frente a la cámara.';
-    modelEntity = document.getElementById('model-entity');
-}
-
-function loadModel(url) {
-    if (!arSceneCreated) {
-        createARScene();
-    }
-    if (!modelEntity) {
-        modelEntity = document.getElementById('model-entity');
-    }
-    if (modelEntity) {
-        modelEntity.setAttribute('gltf-model', url);
-        arStatus.textContent = 'Modelo cargado. Mueve el marcador Hiro frente a la cámara.';
-    }
-}
-
-function handleQuizAnswer(event) {
-    quizResult.classList.remove("hidden");
-    const answer = event.currentTarget.textContent;
-    if (answer === "Mejorar la experiencia de aprendizaje") {
-        quizResult.textContent = "Respuesta correcta. La realidad aumentada mejora la experiencia educativa.";
-    } else {
-        quizResult.textContent = "Respuesta incorrecta. Intenta de nuevo.";
-    }
-}
-
-function closeSidebarOnResize() {
-    if (window.innerWidth > 720) {
-        sidebar.classList.remove("open");
-    }
-}
-
+// ========== START ==========
 init();
