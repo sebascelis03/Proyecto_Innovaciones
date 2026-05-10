@@ -1,3 +1,15 @@
+// ========== CAMERA INTERCEPTOR (HACK FOR AR.JS) ==========
+window.activeARStreams = [];
+if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    const origGetUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+    navigator.mediaDevices.getUserMedia = function(constraints) {
+        return origGetUserMedia(constraints).then(stream => {
+            window.activeARStreams.push(stream);
+            return stream;
+        });
+    };
+}
+
 // ========== STATE ==========
 const STORAGE_KEY = 'aulara_username';
 
@@ -56,9 +68,23 @@ navItems.forEach(item => {
 });
 
 // ================================================================
-//  LAB RA — Inyección dinámica y Vista Previa
+//  LAB RA — Inyección dinámica, Vista Previa y Tabs Internas
 // ================================================================
 
+// Tabs internas
+const labTabs = document.querySelectorAll('.lab-tab');
+const labPanels = document.querySelectorAll('.lab-subpanel');
+
+labTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+        labTabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        
+        labPanels.forEach(p => p.classList.remove('active'));
+        const target = document.getElementById(tab.getAttribute('data-target'));
+        if (target) target.classList.add('active');
+    });
+});
 
 const startArBtn   = document.getElementById('start-ar-btn');
 const arViewport   = document.getElementById('ar-viewport');
@@ -67,7 +93,8 @@ const modelUpload  = document.getElementById('model-upload');
 const uploadStatus = document.getElementById('upload-status');
 
 // Contenedores
-const previewContainer = document.getElementById('preview-model-container');
+const previewModelViewer = document.getElementById('preview-model-viewer');
+const previewPlaceholder = document.getElementById('preview-placeholder');
 let arContainer = null;  // se setea cuando arranca AR
 let userBlobURL = null;
 
@@ -93,8 +120,12 @@ if (modelUpload) {
             uploadStatus.style.color = '#10b981';
         }
 
-        // 1. Inyectar siempre en el Preview 3D
-        injectModelToContainer(previewContainer, 'loaded-preview-model', 'preview-default-box', 1.5);
+        // 1. Inyectar siempre en el Preview 3D (Usando model-viewer)
+        if (previewModelViewer && previewPlaceholder) {
+            previewModelViewer.src = userBlobURL;
+            previewModelViewer.style.display = 'block';
+            previewPlaceholder.style.display = 'none';
+        }
 
         // 2. Inyectar en el AR si ya está activo
         if (arContainer) {
@@ -126,6 +157,8 @@ function injectModelToContainer(container, entityId, defaultBoxId, scale) {
 }
 
 // Botón de inicio: crear la escena AR
+let arInterval = null;
+
 if (startArBtn) {
     startArBtn.addEventListener('click', () => {
         startArBtn.textContent = '⏳ Iniciando cámara...';
@@ -134,29 +167,78 @@ if (startArBtn) {
         if (arPlaceholder) arPlaceholder.style.display = 'none';
 
         const sceneHTML = `
-            <a-scene embedded
-                     arjs="sourceType: webcam; debugUIEnabled: false;"
-                     vr-mode-ui="enabled: false"
-                     renderer="logarithmicDepthBuffer: true;"
-                     style="width:100%;height:100%;">
-                <a-marker preset="hiro">
-                    <a-entity id="ar-model-container"
-                              position="0 0 0"
-                              rotation="-90 0 0"
-                              animation="property: rotation; to: -90 360 0; loop: true; dur: 10000; easing: linear;">
-                        <a-box id="default-box" color="#10b981" material="wireframe: true; opacity: 0.8" scale="0.5 0.5 0.5"></a-box>
-                    </a-entity>
-                </a-marker>
-                <a-entity camera></a-entity>
-            </a-scene>
-            <div class="ar-overlay">
-                <p>Muestra el <strong>Marcador Hiro</strong> a la cámara para ver el modelo proyectado.</p>
+            <div id="ar-wrapper" style="width: 100%; height: 100%; position: absolute; top:0; left:0; z-index: 5;">
+                <a-scene embedded
+                         arjs="sourceType: webcam; debugUIEnabled: false;"
+                         vr-mode-ui="enabled: false"
+                         renderer="logarithmicDepthBuffer: true;"
+                         style="width:100%; height:100%; position: absolute; top:0; left:0; z-index: 2;">
+                    <a-marker preset="hiro">
+                        <a-entity id="ar-model-container"
+                                  position="0 0 0"
+                                  rotation="-90 0 0"
+                                  animation="property: rotation; to: -90 360 0; loop: true; dur: 10000; easing: linear;">
+                            <a-box id="default-box" color="#10b981" material="wireframe: true; opacity: 0.8" scale="0.5 0.5 0.5"></a-box>
+                        </a-entity>
+                    </a-marker>
+                    <a-entity camera></a-entity>
+                </a-scene>
+                <div class="ar-overlay" id="ar-overlay" style="z-index: 10;">
+                    <p>Muestra el <strong>Marcador Hiro</strong> a la cámara para ver el modelo.</p>
+                    <br>
+                    <button class="btn-primary" id="stop-ar-btn" style="margin-top:12px; background:#ef4444; padding:8px 20px; width:auto; font-size:0.95rem; display:inline-block; box-shadow:0 4px 10px rgba(239,68,68,0.4); pointer-events: auto;">🛑 Apagar Cámara</button>
+                </div>
             </div>
         `;
 
         arViewport.insertAdjacentHTML('beforeend', sceneHTML);
-        const arScene = arViewport.querySelector('a-scene');
+        const arScene = document.querySelector('#ar-wrapper a-scene');
 
+        // Atar el evento de apagado INMEDIATAMENTE
+        document.getElementById('stop-ar-btn').addEventListener('click', () => {
+            clearInterval(arInterval);
+            const wrapper = document.getElementById('ar-wrapper');
+            if (wrapper) wrapper.parentNode.removeChild(wrapper);
+            
+            // Buscar y apagar TODOS los videos en DOM
+            const videos = document.querySelectorAll('video');
+            videos.forEach(v => {
+                if (v.srcObject) v.srcObject.getTracks().forEach(t => t.stop());
+                v.parentNode.removeChild(v);
+            });
+
+            // Usar el interceptor maestro para matar todo rastro de cámara en hardware
+            if (window.activeARStreams && window.activeARStreams.length > 0) {
+                window.activeARStreams.forEach(stream => {
+                    stream.getTracks().forEach(track => track.stop());
+                });
+                window.activeARStreams = []; // Limpiar la lista
+            }
+
+            // Hack extra para Safari/iOS por si acaso
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({video: true}).then(stream => {
+                    stream.getTracks().forEach(t => t.stop());
+                }).catch(e => {});
+            }
+
+            // Restaurar estado visual
+            arPlaceholder.style.display = 'flex';
+            startArBtn.textContent = 'Activar Cámara RA';
+            startArBtn.disabled = false;
+            document.body.style.overflow = ''; // Restaurar overflow
+        });
+
+        // Loop agresivo para forzar a que el video de AR.js se mueva a nuestro wrapper
+        arInterval = setInterval(() => {
+            const video = document.querySelector('video');
+            const wrapper = document.getElementById('ar-wrapper');
+            if (video && wrapper && video.parentElement !== wrapper) {
+                wrapper.prepend(video);
+            }
+        }, 300);
+
+        // Cuando la escena cargue, inyectar el modelo
         arScene.addEventListener('loaded', () => {
             arContainer = document.getElementById('ar-model-container');
             if (userBlobURL) {
